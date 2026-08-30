@@ -3,7 +3,12 @@
 Łamigłówka logiczna: plansza jest zastawiona strzałkami, a Twoim zadaniem jest
 usunąć je wszystkie.
 
-![Plansza gry](docs/screenshot.png)
+### ▶ [Zagraj teraz](https://claudeplos.github.io/Unarrow/)
+
+**https://claudeplos.github.io/Unarrow/** — działa od razu w przeglądarce, także
+na telefonie. Nic nie trzeba instalować.
+
+[![Plansza gry](docs/screenshot.png)](https://claudeplos.github.io/Unarrow/)
 
 Czysty JavaScript, jeden `<canvas>`, zero zależności i zero kroku budowania.
 
@@ -11,6 +16,7 @@ Czysty JavaScript, jeden `<canvas>`, zero zależności i zero kroku budowania.
 
 ## Spis treści
 
+* [Zagraj teraz](https://claudeplos.github.io/Unarrow/)
 * [Zasady](#zasady)
 * [Uruchomienie](#uruchomienie)
 * [Sterowanie](#sterowanie)
@@ -46,6 +52,18 @@ wyłącznie jako przeszkoda dla pozostałych.
 
 ## Uruchomienie
 
+### W przeglądarce
+
+**https://claudeplos.github.io/Unarrow/** — wersja z gałęzi `main`, hostowana
+na GitHub Pages.
+
+Na iPhonie i Androidzie warto po wejściu użyć *Udostępnij → Dodaj do ekranu
+początkowego*, żeby mieć grę pod ikoną. Sterowanie dotykiem jest obsłużone:
+strzałkę usuwa się dotknięciem, a cel trafienia jest powiększony na tyle, żeby
+dało się celować palcem.
+
+### Lokalnie
+
 Nie ma zależności ani kroku budowania. Wystarczy otworzyć plik:
 
 ```
@@ -58,6 +76,10 @@ więc gra działa również z `file://`, bez lokalnego serwera. Opcjonalnie:
 ```
 npx http-server . -p 8080   # potem http://localhost:8080
 ```
+
+Uwaga dla iOS: nie da się sensownie otworzyć tych plików z aplikacji *Pliki* —
+Safari kiepsko radzi sobie z lokalnym HTML-em ładującym osobne pliki CSS i JS.
+Na telefonie korzystaj z wersji hostowanej.
 
 ## Sterowanie
 

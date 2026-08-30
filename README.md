@@ -20,6 +20,7 @@ Czysty JavaScript, jeden `<canvas>`, zero zależności i zero kroku budowania.
 * [Zasady](#zasady)
 * [Uruchomienie](#uruchomienie)
 * [Sterowanie](#sterowanie)
+* [Instalacja jako aplikacja](#instalacja-jako-aplikacja)
 * [Struktura projektu](#struktura-projektu)
 * [Model danych](#model-danych)
 * [Generator plansz](#generator-plansz)
@@ -58,9 +59,12 @@ wyłącznie jako przeszkoda dla pozostałych.
 na GitHub Pages.
 
 Na iPhonie i Androidzie warto po wejściu użyć *Udostępnij → Dodaj do ekranu
-początkowego*, żeby mieć grę pod ikoną. Sterowanie dotykiem jest obsłużone:
-strzałkę usuwa się dotknięciem, a cel trafienia jest powiększony na tyle, żeby
-dało się celować palcem.
+początkowego* — gra dostanie własną ikonę, uruchomi się na pełnym ekranie bez
+paska adresu i będzie działać offline. Szczegóły w sekcji
+[Instalacja jako aplikacja](#instalacja-jako-aplikacja).
+
+Sterowanie dotykiem jest obsłużone: strzałkę usuwa się dotknięciem, a cel
+trafienia jest powiększony na tyle, żeby dało się celować palcem.
 
 ### Lokalnie
 
@@ -97,6 +101,40 @@ czerwonym. To celowe: kolor pod kursorem nie może zdradzać, czy strzałka jest
 usuwalna, bo to właśnie jest zagadka. Czerwień zarezerwowana jest dla
 podpowiedzi i dla drgania zablokowanej strzałki.
 
+## Instalacja jako aplikacja
+
+Gra jest aplikacją progresywną (PWA), więc da się ją dodać do ekranu
+początkowego i grać bez sieci.
+
+**iPhone / iPad** — otwórz grę w Safari, potem *Udostępnij* → *Dodaj do ekranu
+początkowego*. iOS nie czyta z manifestu ani trybu wyświetlania, ani nazwy pod
+ikoną, dlatego w `index.html` siedzą osobne meta tagi `apple-mobile-web-app-*`
+i `apple-touch-icon`. Bez nich stuknięcie w ikonę otwierałoby zwykłe Safari
+z paskiem adresu.
+
+**Android / desktop** — Chrome sam zaproponuje instalację, albo *menu* →
+*Zainstaluj aplikację*.
+
+Po pierwszym wejściu `sw.js` wrzuca całą grę do cache przeglądarki, więc
+kolejne uruchomienia działają **bez połączenia** — w samolocie, w metrze,
+gdziekolwiek.
+
+### Jak działa cache
+
+Strategia to **stale-while-revalidate**: odpowiedź idzie natychmiast z cache
+(offline działa, start jest szybki), a świeża wersja pobierana jest w tle
+i wchodzi w życie przy następnym uruchomieniu. Zwykłe cache-first potrafiłoby
+przykleić gracza do starej wersji aż do ręcznej zmiany numeru cache.
+
+Wypuszczając zmiany nie trzeba więc nic robić — dojdą same, z jednym
+uruchomieniem opóźnienia. Stałą `CACHE` w `sw.js` podbija się tylko przy
+**zmianie listy plików** do wstępnego zapisania, bo to ona wymusza ponowne
+`addAll()` i sprzątnięcie starego cache.
+
+Service worker rejestruje się wyłącznie po HTTPS i na `localhost` — tak
+wymagają przeglądarki. Z `file://` `js/pwa.js` po cichu odpuszcza, żeby nie
+sypać błędem w konsoli.
+
 ## Struktura projektu
 
 | plik | rola |
@@ -108,10 +146,14 @@ podpowiedzi i dla drgania zablokowanej strzałki.
 | `js/generator.js` | generator plansz z gwarancją rozwiązywalności |
 | `js/sfx.js` | dźwięki syntezowane na WebAudio |
 | `js/game.js` | stan gry, rysowanie, obsługa wejścia |
+| `js/pwa.js` | rejestracja service workera |
+| `manifest.webmanifest` | metadane aplikacji progresywnej |
+| `sw.js` | service worker — cache i tryb offline |
+| `icons/` | ikony aplikacji (192, 512, apple-touch, favicon) |
 | `docs/screenshot.png` | zrzut ekranu do README |
 
 Kolejność ładowania w `index.html` jest istotna: `rng` → `generator` →
-`geometry` → `sfx` → `game`. Każdy plik wystawia jeden obiekt w `window`.
+`geometry` → `sfx` → `game` → `pwa`. Każdy plik wystawia jeden obiekt w `window`.
 
 ## Model danych
 
@@ -362,7 +404,10 @@ Paleta siedzi obok, w `COLORS`.
 
 ## Wsparcie przeglądarek
 
-Wymagane: Canvas 2D, Pointer Events, `localStorage`, WebAudio. Działa w bieżących
+Wymagane: Canvas 2D, Pointer Events, `localStorage`, WebAudio. Tryb offline
+i instalacja dokładają Service Worker oraz Cache Storage, dostępne wyłącznie po
+HTTPS i na `localhost`; ich brak nie psuje samej gry, znika tylko instalacja
+i granie bez sieci. Działa w bieżących
 wersjach Chrome, Firefox, Safari i Edge, również na telefonach. Rysowanie
 uwzględnia `devicePixelRatio` (ograniczony do 2,5, żeby nie przepalać wypełnienia
 na ekranach o dużej gęstości). Brak WebAudio wycisza dźwięki, ale nie psuje gry.

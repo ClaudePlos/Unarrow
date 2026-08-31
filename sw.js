@@ -5,7 +5,7 @@
  * wersja na następne uruchomienie. Zwykłe cache-first potrafiłoby przykleić
  * gracza do starej wersji aż do ręcznej zmiany numeru cache.
  */
-const CACHE = 'unarrow-v2';
+const CACHE = 'unarrow-v3';
 
 const ASSETS = [
   './',
@@ -17,6 +17,7 @@ const ASSETS = [
   './js/geometry.js',
   './js/sfx.js',
   './js/music.js',
+  './js/i18n.js',
   './js/game.js',
   './js/pwa.js',
   './icons/icon-192.png',

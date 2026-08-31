@@ -31,6 +31,7 @@
     hint: document.getElementById('hintBtn'),
     restart: document.getElementById('restartBtn'),
     sound: document.getElementById('soundBtn'),
+    lang: document.getElementById('langBtn'),
     info: document.getElementById('infoBtn'),
     infoModal: document.getElementById('infoModal'),
     infoClose: document.getElementById('infoClose'),
@@ -259,20 +260,29 @@
     ui.left.textContent = left;
   }
 
+  /* Wywoływane zarówno po wygranej, jak i przy zmianie języka w trakcie
+     oglądania ekranu wygranej — statystyki mają wtedy przełączyć się razem
+     z resztą interfejsu, a nie zostać po staremu na angielskim/polskim. */
+  function renderWinStats() {
+    if (!state.finishedAt) return;
+    const stats = I18N.t('stats');
+    const secs = Math.round((state.finishedAt - state.startedAt) / 1000);
+    const mm = String(Math.floor(secs / 60)).padStart(2, '0');
+    const ss = String(secs % 60).padStart(2, '0');
+    ui.winStats.textContent =
+      stats.time + ' ' + mm + ':' + ss +
+      ' · ' + state.moves + ' ' + stats.moves +
+      ' · ' + state.mistakes + ' ' + stats.mistakes +
+      (state.hints ? ' · ' + state.hints + ' ' + stats.hints : '');
+  }
+
   function checkWin() {
     if (state.won) return;
     if (state.arrows.some(a => a.status !== 'gone')) return;
     state.won = true;
     state.finishedAt = performance.now();
     Sfx.win();
-    const secs = Math.round((state.finishedAt - state.startedAt) / 1000);
-    const mm = String(Math.floor(secs / 60)).padStart(2, '0');
-    const ss = String(secs % 60).padStart(2, '0');
-    ui.winStats.textContent =
-      'Czas ' + mm + ':' + ss +
-      ' · ruchów ' + state.moves +
-      ' · pomyłek ' + state.mistakes +
-      (state.hints ? ' · podpowiedzi ' + state.hints : '');
+    renderWinStats();
     const next = state.puzzle.level + 1;
     if (next > parseInt(store.read('unarrow.level', '1'), 10)) store.write('unarrow.level', next);
     setTimeout(() => ui.win.classList.remove('hidden'), 420);
@@ -514,12 +524,21 @@
     ui.sound.classList.toggle('muted', muted);
   });
 
+  ui.lang.addEventListener('click', () => {
+    const next = I18N.lang() === 'en' ? 'pl' : 'en';
+    I18N.setLang(next);
+    store.write('unarrow.lang', next);
+    renderWinStats(); // ekran wygranej, jeśli akurat widoczny, ma się przełączyć razem z resztą
+  });
+
   // ---------------------------------------------------------------- start
 
   const mutedAtStart = store.read('unarrow.muted', '0') === '1';
   Sfx.setMuted(mutedAtStart);
   Music.setMuted(mutedAtStart);
   ui.sound.classList.toggle('muted', mutedAtStart);
+
+  I18N.setLang(store.read('unarrow.lang', 'en'));
 
   /* Uchwyt do testów automatycznych i debugowania z konsoli. */
   window.__unarrow = {

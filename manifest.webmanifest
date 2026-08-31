@@ -1,8 +1,8 @@
 {
-  "name": "Unarrow — łamigłówka ze strzałkami",
+  "name": "Unarrow — an arrow-removal puzzle",
   "short_name": "Unarrow",
-  "description": "Łamigłówka logiczna: usuń z planszy wszystkie strzałki.",
-  "lang": "pl",
+  "description": "A logic puzzle: clear the board by removing every arrow.",
+  "lang": "en",
   "dir": "ltr",
   "start_url": "./",
   "scope": "./",

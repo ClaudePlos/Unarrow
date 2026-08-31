@@ -476,6 +476,7 @@
   canvas.addEventListener('pointerdown', (e) => {
     if (state.won) return;
     Sfx.unlock();
+    Music.unlock();
     const [px, py] = pointerPos(e);
     const [gx, gy] = screenToGrid(px, py);
     const hit = arrowAt(gx, gy);
@@ -498,6 +499,7 @@
     ui.infoModal.classList.add('hidden');
     store.write('unarrow.seen', '1');
     Sfx.unlock();
+    Music.unlock();
   });
   ui.infoModal.addEventListener('click', (e) => {
     if (e.target === ui.infoModal) ui.infoModal.classList.add('hidden');
@@ -507,6 +509,7 @@
   ui.sound.addEventListener('click', () => {
     const muted = !Sfx.isMuted();
     Sfx.setMuted(muted);
+    Music.setMuted(muted);
     store.write('unarrow.muted', muted ? '1' : '0');
     ui.sound.classList.toggle('muted', muted);
   });
@@ -515,6 +518,7 @@
 
   const mutedAtStart = store.read('unarrow.muted', '0') === '1';
   Sfx.setMuted(mutedAtStart);
+  Music.setMuted(mutedAtStart);
   ui.sound.classList.toggle('muted', mutedAtStart);
 
   /* Uchwyt do testów automatycznych i debugowania z konsoli. */

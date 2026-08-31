@@ -54,6 +54,7 @@
     setMuted(v) { muted = !!v; },
     isMuted() { return muted; },
     unlock() { ensure(); },
+    context: ensure,   // współdzielony AudioContext, używany też przez js/music.js
     release() { sweep(340, 900, 0.22, 0.09); },
     blocked() { tone(150, 0.1, 'square', 0.07); tone(112, 0.13, 'square', 0.06, 0.07); },
     hint() { tone(880, 0.09, 'sine', 0.07); },

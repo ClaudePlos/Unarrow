@@ -20,6 +20,7 @@ Czysty JavaScript, jeden `<canvas>`, zero zależności i zero kroku budowania.
 * [Zasady](#zasady)
 * [Uruchomienie](#uruchomienie)
 * [Sterowanie](#sterowanie)
+* [Muzyka w tle](#muzyka-w-tle)
 * [Instalacja jako aplikacja](#instalacja-jako-aplikacja)
 * [Struktura projektu](#struktura-projektu)
 * [Model danych](#model-danych)
@@ -93,13 +94,49 @@ Na telefonie korzystaj z wersji hostowanej.
 | <kbd>H</kbd> lub przycisk żarówki | podpowiedź — podświetla losową strzałkę, którą da się teraz usunąć |
 | <kbd>R</kbd> lub przycisk odświeżenia | ta sama plansza od nowa |
 | <kbd>Esc</kbd> | zamknięcie okna z zasadami |
-| przycisk głośnika | wyciszenie |
+| przycisk głośnika | wyciszenie efektów **i** muzyki w tle jednym kliknięciem |
 | przycisk ⓘ | zasady gry |
 
 Najechanie myszą podświetla strzałkę **neutralnym szarym** kolorem, nigdy
 czerwonym. To celowe: kolor pod kursorem nie może zdradzać, czy strzałka jest
 usuwalna, bo to właśnie jest zagadka. Czerwień zarezerwowana jest dla
 podpowiedzi i dla drgania zablokowanej strzałki.
+
+## Muzyka w tle
+
+W tle leci zapętlona kompozycja w stylu chiptune z gier na Amigę — cała
+wygenerowana i zsekwencjonowana w locie na WebAudio (`js/music.js`), zero
+plików audio w repozytorium, tak samo jak efekty dźwiękowe.
+
+Naśladuje ograniczenie prawdziwego 4-kanałowego chipu dźwiękowego Amigi
+(Paula): bas (`triangle`), melodia prowadząca (`square`) i perkusja z szumu
+filtrowanego pasmowo, plus kanał arpeggio grający root-tercja-kwinta-tercja
+w kółko na szesnastkach — to klasyczna sztuczka trackerowa udająca akord na
+pojedynczym kanale, bo Paula naprawdę zagrać akordu na raz nie potrafiła.
+
+Progresja Am–F–C–G, cztery takty w metrum 4/4 przy 132 uderzeniach na
+minutę, w naturalnej gamie a-moll — stąd F, nie F#, również nad akordem G
+(typowe zapożyczenie eolskie w tej właśnie progresji, znajome z mnóstwa
+piosenek). Ostatni takt kończy się zbiegiem nut prowadzącym z powrotem do
+otwierającej nuty pierwszego taktu, więc pętla domyka się bez słyszalnego
+szwu.
+
+### Jak to gra
+
+Sekwencer korzysta ze standardowej techniki *lookahead scheduling*: co 25 ms
+sprawdza zegar `AudioContext` i planuje z wyprzedzeniem 100 ms wszystkie
+nuty, których czas nadszedł — próbkowanie samym `setTimeout` w rytm nut
+gubiłoby się w drobnych opóźnieniach silnika JS i dawało słyszalny jitter.
+Muzyka i efekty dźwiękowe współdzielą jeden `AudioContext` (`Sfx.context()`),
+więc nie ma dwóch niezależnych zegarów audio ani podwójnego kosztu
+odblokowania na iOS.
+
+W ukrytej karcie sekwencer się zatrzymuje (`visibilitychange`) — i tak nikt
+by nie usłyszał, a po powrocie wznawia się od bieżącego miejsca w pętli, bez
+nadrabiania zaległości. Wyciszenie działa tak samo jak w `js/sfx.js`: `Music`
+nie zatrzymuje sekwencera, tylko każda z funkcji odtwarzających nutę
+sprawdza flagę wyciszenia i w razie potrzeby nic nie tworzy — dzięki temu
+odciszenie wraca dokładnie w takt, bez doganiania pętli.
 
 ## Instalacja jako aplikacja
 
@@ -144,7 +181,8 @@ sypać błędem w konsoli.
 | `js/rng.js` | deterministyczny PRNG (mulberry32) |
 | `js/geometry.js` | operacje na łamanych: długość łuku, wycinek, trafianie |
 | `js/generator.js` | generator plansz z gwarancją rozwiązywalności |
-| `js/sfx.js` | dźwięki syntezowane na WebAudio |
+| `js/sfx.js` | efekty dźwiękowe syntezowane na WebAudio |
+| `js/music.js` | muzyka w tle w stylu chiptune, sekwencjonowana na WebAudio |
 | `js/game.js` | stan gry, rysowanie, obsługa wejścia |
 | `js/pwa.js` | rejestracja service workera |
 | `manifest.webmanifest` | metadane aplikacji progresywnej |
@@ -153,7 +191,9 @@ sypać błędem w konsoli.
 | `docs/screenshot.png` | zrzut ekranu do README |
 
 Kolejność ładowania w `index.html` jest istotna: `rng` → `generator` →
-`geometry` → `sfx` → `game` → `pwa`. Każdy plik wystawia jeden obiekt w `window`.
+`geometry` → `sfx` → `music` → `game` → `pwa`. `music.js` wywołuje
+`Sfx.context()`, więc musi się załadować po `sfx.js`. Każdy plik wystawia
+jeden obiekt w `window`.
 
 ## Model danych
 
@@ -331,13 +371,18 @@ Generator.generate(level)     // → obiekt planszy
 Generator.levelSpec(level)    // → { size, arrows }
 Generator.DIRS                // → cztery kierunki osiowe
 
-Sfx.setMuted(v)  Sfx.isMuted()  Sfx.unlock()
+Sfx.setMuted(v)  Sfx.isMuted()  Sfx.unlock()  Sfx.context()
 Sfx.release()    Sfx.blocked()  Sfx.hint()  Sfx.win()
+
+Music.setMuted(v)  Music.isMuted()  Music.unlock()
 ```
 
-`Sfx.unlock()` wołane jest przy pierwszym kliknięciu, bo przeglądarki nie
-pozwalają wystartować `AudioContext` bez gestu użytkownika. Dźwięki są
-syntezowane oscylatorami — w repozytorium nie ma żadnych plików audio.
+`Sfx.unlock()` i `Music.unlock()` wołane są przy pierwszym kliknięciu, bo
+przeglądarki nie pozwalają wystartować `AudioContext` bez gestu użytkownika.
+`Sfx.context()` zwraca (i w razie potrzeby zakłada) współdzielony
+`AudioContext`, z którego korzysta też `js/music.js` — jeden kontekst na całą
+grę, jedno odblokowanie. Wszystko syntezowane jest oscylatorami i filtrowanym
+szumem — w repozytorium nie ma żadnych plików audio.
 
 Dodatkowo `js/game.js` wystawia uchwyt do testów i debugowania z konsoli:
 
